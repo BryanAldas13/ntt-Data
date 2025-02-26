@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Solo ejecuta el pipeline cuando hay cambios en la rama main
+  workflow_dispatch:  # Permite ejecuciones manuales desde GitHub Actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v3
+
+      - name: 🔧 Configurar Java y Maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 📦 Instalar dependencias
+        run: mvn install --no-transfer-progress
+
+      - name: 🏗️ Compilar la aplicación
+        run: mvn clean package
+
+      - name: 📂 Guardar artefactos para Test
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-jar
+          path: target/*.jar  # Guarda el .jar para usarlo en el siguiente job
+
+  test:
+    needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Descargar artefactos del Build
+        uses: actions/download-artifact@v3
+        with:
+          name: app-jar
+          path: target
+
+      - name: 🧪 Ejecutar pruebas
+        run: mvn test
+
+  deploy:
+    needs: test  # Solo se ejecuta si la etapa de Test fue exitosa
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v3
+
+      - name: 🔑 Iniciar sesión en Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: 🐳 Construir y subir imagen Docker
+        run: |
+          IMAGE_TAG=latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG .
+          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG
+
+      - name: 🚀 Desplegar en Kubernetes (Minikube)
+        run: |
+          kubectl set image deployment/ms-devops-deployment ms-devops=${{ secrets.DOCKER_USERNAME }}/ms-devops:latest
+          kubectl rollout restart deployment ms-devops-deployment
