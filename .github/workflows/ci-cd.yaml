@@ -66,7 +66,7 @@ jobs:
       - name: 🏷️ Definir versión de la imagen
         id: vars
         run: |
-          if [ "${{ github.event.inputs.version }}" == "latest" ]; then
+          if [[ -z "${{ github.event.inputs.version }}" || "${{ github.event.inputs.version }}" == "latest" ]]; then
             VERSION=$(echo $GITHUB_SHA | cut -c1-7)  # Usa el SHA corto del commit como versión
           else
             VERSION=${{ github.event.inputs.version }}
