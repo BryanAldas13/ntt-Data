@@ -5,6 +5,11 @@ on:
     branches:
       - main  # Solo ejecuta el pipeline cuando hay cambios en la rama main
   workflow_dispatch:  # Permite ejecuciones manuales desde GitHub Actions
+    inputs:
+      version:
+        description: "Versión de la imagen Docker (ej. v1.0.0)"
+        required: true
+        default: "latest"
 
 jobs:
   build:
@@ -12,7 +17,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout del código
-        uses: actions/checkout@v4  # Obtiene el código del repositorio
+        uses: actions/checkout@v4
 
       - name: 🔧 Configurar Java y Maven
         uses: actions/setup-java@v3
@@ -30,27 +35,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
-          path: target/*.jar  # Guarda el .jar para usarlo en la siguiente fase
+          path: target/*.jar  # Guarda el .jar para usarlo en el siguiente job
 
   test:
     needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout del código
-        uses: actions/checkout@v4  # Asegura que el código fuente esté disponible
-
       - name: 📥 Descargar artefactos del Build
         uses: actions/download-artifact@v4
         with:
           name: app-jar
-          path: target  # Descarga el JAR en la carpeta correcta
+          path: target
 
       - name: 🧪 Ejecutar pruebas
-        run: mvn test  # Ejecuta pruebas unitarias
+        run: mvn test
 
-  publish:
-    needs: test  # Solo se ejecuta si la fase de Test fue exitosa
+  docker:
+    needs: test  # Solo se ejecuta si la etapa de Test fue exitosa
     runs-on: ubuntu-latest
 
     steps:
@@ -61,8 +63,24 @@ jobs:
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      - name: 🏷️ Definir versión de la imagen
+        id: vars
+        run: |
+          if [ "${{ github.event.inputs.version }}" == "latest" ]; then
+            VERSION=$(echo $GITHUB_SHA | cut -c1-7)  # Usa el SHA corto del commit como versión
+          else
+            VERSION=${{ github.event.inputs.version }}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: 🐳 Construir y subir imagen Docker
         run: |
-          IMAGE_TAG=latest
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG .
-          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-devops:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:$VERSION
+          
+          # Opcionalmente, actualizar la etiqueta "latest"
+          docker tag ${{ secrets.DOCKER_USERNAME }}/ms-devops:$VERSION ${{ secrets.DOCKER_USERNAME }}/ms-devops:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:latest
+
+      - name: 🔔 Notificar versión generada
+        run: echo "La imagen Docker fue publicada con la versión: $VERSION"
