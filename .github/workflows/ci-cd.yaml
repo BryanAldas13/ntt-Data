@@ -12,36 +12,54 @@ jobs:
 
     steps:
       - name: 📥 Checkout del código
-        uses: actions/checkout@v4  # Descarga el código desde el repositorio
+        uses: actions/checkout@v4  # Descarga el código desde GitHub
 
       - name: 🔧 Configurar Java y Maven
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'  # Usar JDK de Eclipse Temurin
-          java-version: '17'       # Versión de Java 17
+          distribution: 'temurin'  # JDK de Eclipse Temurin
+          java-version: '17'       # Versión 17
 
       - name: 📦 Instalar dependencias
-        run: mvn install --no-transfer-progress  # Descarga todas las dependencias
+        run: mvn install --no-transfer-progress  # Instala dependencias
 
       - name: 🏗️ Compilar la aplicación
-        run: mvn clean package  # Compila el proyecto y genera el JAR
+        run: mvn clean package  # Genera el JAR
 
       - name: 📂 Guardar artefactos para Test
-        uses: actions/upload-artifact@v4  # Guarda el .jar para la siguiente fase
+        uses: actions/upload-artifact@v4  # Guarda el JAR para la siguiente fase
         with:
           name: app-jar
-          path: target/*.jar  # Guarda el archivo JAR compilado
+          path: target/*.jar  # Ruta donde se genera el JAR
 
   test:
-    needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
       - name: 📥 Descargar artefactos del Build
-        uses: actions/download-artifact@v4  # Recupera el JAR compilado
+        uses: actions/download-artifact@v4
         with:
           name: app-jar
-          path: target  # Guarda el artefacto en la carpeta target
+          path: target  # Ubicación del JAR
 
       - name: 🧪 Ejecutar pruebas
-        run: mvn test  # Ejecuta las pruebas unitarias
+        run: mvn test  # Ejecuta pruebas unitarias
+
+  docker-build:
+    needs: test  # Solo se ejecuta si las pruebas pasaron
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v4
+
+      - name: 🔑 Iniciar sesión en Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: 🐳 Construir y subir imagen Docker
+        run: |
+          IMAGE_TAG=latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG .
+          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG
