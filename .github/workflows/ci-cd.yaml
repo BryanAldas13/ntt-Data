@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: 📥 Checkout del código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Asegura que se clona todo el historial del repo
+
+      - name: 📂 Verificar archivos clonados
+        run: ls -la
 
       - name: 🔧 Configurar Java y Maven
         uses: actions/setup-java@v3
