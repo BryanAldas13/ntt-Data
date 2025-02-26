@@ -32,16 +32,19 @@ jobs:
           name: app-jar
           path: target/*.jar  # Ruta donde se genera el JAR
 
-  test:
+    test:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v4  # Asegura que el código fuente esté disponible
+
       - name: 📥 Descargar artefactos del Build
         uses: actions/download-artifact@v4
         with:
           name: app-jar
-          path: target  # Ubicación del JAR
+          path: target  # Descarga el JAR en la carpeta correcta
 
       - name: 🧪 Ejecutar pruebas
         run: mvn test  # Ejecuta pruebas unitarias
