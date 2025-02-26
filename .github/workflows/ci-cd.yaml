@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main  # Solo ejecuta el pipeline cuando hay cambios en la rama main
-  workflow_dispatch:  # Permite ejecuciones manuales desde GitHub Actions
+  workflow_dispatch:
     inputs:
       version:
         description: "Versión de la imagen Docker (ej. v1.0.0)"
@@ -19,9 +19,9 @@ jobs:
       - name: 📥 Checkout del código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Asegura que se clona todo el historial del repo
+          fetch-depth: 0  # Asegurar que se clonen todos los archivos
 
-      - name: 📂 Verificar archivos clonados
+      - name: 📂 Verificar archivos en el directorio
         run: ls -la
 
       - name: 🔧 Configurar Java y Maven
@@ -31,7 +31,13 @@ jobs:
           java-version: '17'
 
       - name: 📦 Instalar dependencias
-        run: mvn install --no-transfer-progress
+        run: |
+          if [ -f pom.xml ]; then
+            mvn install --no-transfer-progress
+          else
+            echo "⚠️ Archivo pom.xml no encontrado. Verifica la estructura del repositorio."
+            exit 1
+          fi
 
       - name: 🏗️ Compilar la aplicación
         run: mvn clean package
@@ -43,7 +49,7 @@ jobs:
           path: target/*.jar  # Guarda el .jar para usarlo en el siguiente job
 
   test:
-    needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -57,7 +63,7 @@ jobs:
         run: mvn test
 
   docker:
-    needs: test  # Solo se ejecuta si la etapa de Test fue exitosa
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -74,7 +80,7 @@ jobs:
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           if [[ -z "$INPUT_VERSION" || "$INPUT_VERSION" == "latest" ]]; then
-            VERSION=$(echo $GITHUB_SHA | cut -c1-7)  # Usa el SHA corto del commit como versión
+            VERSION=$(echo $GITHUB_SHA | cut -c1-7)
           else
             VERSION=$INPUT_VERSION
           fi
