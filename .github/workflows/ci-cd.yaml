@@ -1,73 +1,47 @@
-name: CI/CD Pipeline  # Nombre del workflow en GitHub Actions
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main  # Ejecuta el pipeline solo cuando hay cambios en la rama main
+      - main  # Solo ejecuta el pipeline cuando hay cambios en la rama main
   workflow_dispatch:  # Permite ejecuciones manuales desde GitHub Actions
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Ejecuta el job en una máquina virtual con Ubuntu más reciente
+    runs-on: ubuntu-latest
 
     steps:
       - name: 📥 Checkout del código
-        uses: actions/checkout@v3  # Descarga el código del repositorio
+        uses: actions/checkout@v4  # Descarga el código desde el repositorio
 
       - name: 🔧 Configurar Java y Maven
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'  # Distribución de Java OpenJDK
-          java-version: '17'  # Versión de Java a usar
+          distribution: 'temurin'  # Usar JDK de Eclipse Temurin
+          java-version: '17'       # Versión de Java 17
 
       - name: 📦 Instalar dependencias
-        run: mvn install --no-transfer-progress  # Instala dependencias del proyecto
+        run: mvn install --no-transfer-progress  # Descarga todas las dependencias
 
       - name: 🏗️ Compilar la aplicación
-        run: mvn clean package  # Compila el código y genera el .jar
+        run: mvn clean package  # Compila el proyecto y genera el JAR
 
       - name: 📂 Guardar artefactos para Test
-        uses: actions/upload-artifact@v4  # Guarda el .jar para la fase de test
+        uses: actions/upload-artifact@v4  # Guarda el .jar para la siguiente fase
         with:
-          name: app-jar  # Nombre del artefacto
-          path: target/*.jar  # Ubicación del archivo generado
+          name: app-jar
+          path: target/*.jar  # Guarda el archivo JAR compilado
 
   test:
-    needs: build  # Se ejecuta solo si la fase de Build fue exitosa
+    needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout del código
-        uses: actions/checkout@v3  # Descarga el código para asegurar que pom.xml esté presente
-
       - name: 📥 Descargar artefactos del Build
-        uses: actions/download-artifact@v4  # Descarga el artefacto generado en la fase anterior
+        uses: actions/download-artifact@v4  # Recupera el JAR compilado
         with:
-          name: app-jar  # Nombre del artefacto
-          path: target  # Carpeta donde se almacenará
+          name: app-jar
+          path: target  # Guarda el artefacto en la carpeta target
 
       - name: 🧪 Ejecutar pruebas
-        run: mvn test  # Ejecuta los tests automáticos del proyecto
-
-  deploy:
-    needs: test  # Se ejecuta solo si la fase de Test fue exitosa
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout del código
-        uses: actions/checkout@v3  # Descarga el código fuente
-
-      - name: 🔑 Iniciar sesión en Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin  # Inicia sesión en Docker Hub
-
-      - name: 🐳 Construir y subir imagen Docker
-        run: |
-          IMAGE_TAG=latest  # Define la etiqueta de la imagen
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG .  # Construye la imagen Docker
-          docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:$IMAGE_TAG  # Sube la imagen a Docker Hub
-
-      - name: 🚀 Desplegar en Kubernetes (Minikube)
-        run: |
-          kubectl set image deployment/ms-devops-deployment ms-devops=${{ secrets.DOCKER_USERNAME }}/ms-devops:latest  # Actualiza la imagen en el Deployment
-          kubectl rollout restart deployment ms-devops-deployment  # Reinicia el Deployment para aplicar cambios
+        run: mvn test  # Ejecuta las pruebas unitarias
