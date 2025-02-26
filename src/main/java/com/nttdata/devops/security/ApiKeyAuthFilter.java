@@ -25,7 +25,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         }
 
         // 🛑 Validar la API Key solo si la URL no está excluida
-        String requestApiKey = request.getHeader("X-API-KEY");
+        String requestApiKey = request.getHeader("X-Parse-REST-API-KEY");
 
         if (apiKey.equals(requestApiKey)) {
             SecurityContextHolder.getContext().setAuthentication(new ApiKeyAuthentication(apiKey));
