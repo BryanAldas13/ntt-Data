@@ -53,11 +53,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v4  # 🔹 Esto asegurará que tengas el `pom.xml`
+      
       - name: 📥 Descargar artefactos del Build
         uses: actions/download-artifact@v4
         with:
           name: app-jar
-          path: target
+          path: target  # El JAR estará en target/
+
+      - name: 📂 Verificar archivos en el directorio
+        run: ls -la && ls -la target  # 🔹 Esto mostrará los archivos disponibles
 
       - name: 🧪 Ejecutar pruebas
         run: mvn test
