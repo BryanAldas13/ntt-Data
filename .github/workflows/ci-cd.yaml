@@ -12,28 +12,28 @@ jobs:
 
     steps:
       - name: 📥 Checkout del código
-        uses: actions/checkout@v4  # Descarga el código desde GitHub
+        uses: actions/checkout@v4  # Obtiene el código del repositorio
 
       - name: 🔧 Configurar Java y Maven
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'  # JDK de Eclipse Temurin
-          java-version: '17'       # Versión 17
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: 📦 Instalar dependencias
-        run: mvn install --no-transfer-progress  # Instala dependencias
+        run: mvn install --no-transfer-progress
 
       - name: 🏗️ Compilar la aplicación
-        run: mvn clean package  # Genera el JAR
+        run: mvn clean package
 
       - name: 📂 Guardar artefactos para Test
-        uses: actions/upload-artifact@v4  # Guarda el JAR para la siguiente fase
+        uses: actions/upload-artifact@v4
         with:
           name: app-jar
-          path: target/*.jar  # Ruta donde se genera el JAR
+          path: target/*.jar  # Guarda el .jar para usarlo en la siguiente fase
 
-    test:
-    needs: build
+  test:
+    needs: build  # Solo se ejecuta si la etapa de Build fue exitosa
     runs-on: ubuntu-latest
 
     steps:
@@ -49,8 +49,8 @@ jobs:
       - name: 🧪 Ejecutar pruebas
         run: mvn test  # Ejecuta pruebas unitarias
 
-  docker-build:
-    needs: test  # Solo se ejecuta si las pruebas pasaron
+  publish:
+    needs: test  # Solo se ejecuta si la fase de Test fue exitosa
     runs-on: ubuntu-latest
 
     steps:
