@@ -27,7 +27,7 @@ jobs:
         run: mvn clean package
 
       - name: 📂 Guardar artefactos para Test
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # 🔄 Actualizado a v4
         with:
           name: app-jar
           path: target/*.jar  # Guarda el .jar para usarlo en el siguiente job
@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: 📥 Descargar artefactos del Build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4  # 🔄 Actualizado a v4
         with:
           name: app-jar
           path: target
