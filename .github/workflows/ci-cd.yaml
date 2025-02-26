@@ -85,4 +85,4 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/ms-devops:latest
 
       - name: 🔔 Notificar versión generada
-        run: echo "La imagen Docker fue publicada con la versión: $VERSION"
+        run: echo "La imagen Docker fue publicada con la versión $VERSION"
