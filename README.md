@@ -1,92 +1,46 @@
-# DevOps Project - NTT DATA
+# Proyecto DevOps - API Rest
 
-Este proyecto es una API REST desarrollada con **Spring Boot** que implementa autenticación basada en **JWT (JSON Web Tokens)** y está diseñada para ser desplegada en un entorno de Kubernetes utilizando **Minikube**. El proyecto incluye un pipeline de CI/CD implementado con **GitHub Actions** para automatizar la construcción, pruebas y despliegue de la aplicación.
+Este proyecto consiste en una API Rest desarrollada con **Spring Boot** para **NTT Data**. La API implementa autenticación basada en **JWT** y está diseñada para proporcionar un servicio seguro y escalable.
 
----
+## Dependencias
 
-## 📋 Descripción del Proyecto
+El proyecto está basado en Spring Boot y utiliza las siguientes dependencias clave:
 
-El proyecto es una API REST que incluye:
-- Autenticación basada en JWT.
-- Endpoints protegidos con Spring Security.
-- Integración con Spring Boot Actuator para monitoreo.
-- Validación de solicitudes con Jakarta Validation API.
-- Configuración de CI/CD para automatizar el proceso de construcción y despliegue.
+- **Spring Boot** para el desarrollo de la API.
+- **Spring Boot DevTools** para mejorar el desarrollo con reinicios automáticos.
+- **Lombok** para simplificar el código y evitar boilerplate.
+- **JUnit** para pruebas unitarias.
+- **JWT** para la gestión de la autenticación.
+- **Spring Boot Actuator** para monitoreo y métricas de la aplicación.
+- **Spring Boot Security** para gestionar la seguridad de la API.
+- **Spring Boot Validation** para validaciones de entrada.
 
----
+## Dockerización y Docker Hub
 
-## 🛠️ Dependencias Utilizadas
+La aplicación ha sido **dockerizada** y subida a **Docker Hub** para su distribución y ejecución en cualquier entorno. Se utiliza un `Dockerfile` para crear una imagen de la aplicación, que se encuentra disponible en Docker Hub.
 
-El proyecto utiliza las siguientes dependencias principales:
+## CI/CD con GitHub Actions
 
-- **Spring Boot Starter Web**: Para construir aplicaciones web con Spring MVC.
-- **Spring Boot Starter Security**: Para implementar seguridad en la aplicación.
-- **Spring Boot Starter Actuator**: Para monitorear y gestionar la aplicación.
-- **JJWT (Java JWT)**: Para la generación y validación de JWT.
-- **Lombok**: Para reducir el código boilerplate.
-- **Spring Boot Starter Validation**: Para validar las solicitudes entrantes.
-- **Spring Boot DevTools**: Para desarrollo rápido con reinicio automático.
+El proyecto utiliza **GitHub Actions** para implementar un pipeline CI/CD. Este pipeline se encarga de:
 
-Puedes encontrar todas las dependencias en el archivo [`pom.xml`](pom.xml).
+- Construir la aplicación.
+- Ejecutar pruebas automáticas.
+- Crear la imagen Docker.
+- Subir la imagen a Docker Hub.
+- Desplegar la aplicación en un clúster **Minikube**.
 
----
+## Infraestructura en Minikube
 
-## 🐳 Dockerización
+La infraestructura está desplegada en **Minikube**, ejecutándose en un entorno virtual basado en **Ubuntu**. El despliegue utiliza los siguientes componentes:
 
-La aplicación ha sido dockerizada y la imagen está disponible en **Docker Hub**. Para construir y subir la imagen Docker, se utiliza el siguiente comando:
+- **Deployment**: Un despliegue que utiliza la imagen Docker desde Docker Hub.
+- **Service**: Exposición de la aplicación a través de un servicio de Kubernetes.
+- **Ingress Controller**: Configurado con un dominio personalizado `ms-devops-local`, que permite el acceso externo a la aplicación en Minikube.
 
-```bash
-docker build -t <dockerhub-username>/ms-devops:<version> .
-docker push <dockerhub-username>/ms-devops:<version>
+## Acceso a la API
 
-## 🚀 Infraestructura en Kubernetes
+Una vez que el Ingress Controller esté configurado correctamente, podrás acceder a la API utilizando el dominio personalizado `ms-devops-local` dentro de Minikube.
 
-La infraestructura del proyecto se implementó en **Minikube**, un entorno local de Kubernetes. Los componentes principales son:
+## Ejemplo de uso
 
-1. **Deployment**: Define la aplicación y utiliza la imagen Docker alojada en Docker Hub.
-2. **Service**: Expone la aplicación dentro del clúster.
-3. **Ingress Controller**: Gestiona el tráfico entrante y utiliza un dominio personalizado (`ms-devops.local`).
-
-### Configuración del Ingress
-
-El Ingress está configurado para redirigir el tráfico al servicio de la aplicación. El dominio personalizado `ms-devops.local` se resolvió mediante la modificación del archivo `/etc/hosts` en el sistema local.
-
----
-
-## 🔄 Pipeline de CI/CD con GitHub Actions
-
-El pipeline de CI/CD está configurado en GitHub Actions y se divide en las siguientes fases:
-
-### 1. **Build**
-- **Objetivo**: Compilar el proyecto y generar el archivo `.jar`.
-- **Pasos**:
-  - Checkout del código.
-  - Configuración de Java y Maven.
-  - Instalación de dependencias.
-  - Compilación del proyecto con `mvn clean package`.
-  - Guardado del archivo `.jar` como artefacto para la fase de pruebas.
-
-### 2. **Test**
-- **Objetivo**: Ejecutar las pruebas unitarias.
-- **Pasos**:
-  - Descarga del artefacto generado en la fase de Build.
-  - Ejecución de pruebas con `mvn test`.
-
-### 3. **Docker**
-- **Objetivo**: Construir y subir la imagen Docker a Docker Hub.
-- **Pasos**:
-  - Checkout del código.
-  - Inicio de sesión en Docker Hub.
-  - Definición de la versión de la imagen (usando el SHA del commit o una versión personalizada).
-  - Construcción y subida de la imagen Docker.
-  - Actualización de la etiqueta `latest` (opcional).
-
----
-
-## 🖥️ Despliegue en Minikube
-
-Para desplegar la aplicación en Minikube, se siguieron los siguientes pasos:
-
-1. **Iniciar Minikube**:
-   ```bash
-   minikube start
+Para probar la API, realiza una solicitud HTTP con el token JWT obtenido al iniciar sesión. La API requerirá un nuevo token para cada solicitud y una clave `x-api-key` fija.
